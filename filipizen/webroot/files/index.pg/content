@@ -1,0 +1,26 @@
+<%
+    if( SESSION.sessionid != null ) {
+        RESPONSE.sendRedirect("/userpanel");    
+    }
+%>
+
+
+<section class="container container-start ">
+
+        <div class="editorial-cell">
+            <img src="/res/logo-filipizen-topnav.svg" width="200">
+            <div>
+               <h1 class="slogan">Experience ease of doing business with the government</h1>
+                <p class="sub-slogan">Over <b>50 local government units</b> participating all over the Philippines.</p>
+                <div class="row center">
+                    <a class="waves-effect waves-light btn  cyan accent-4 btnStarted "  href="/partners" >Start here</a>   
+                </div>
+            </div>
+             
+        </div>
+</section>
+
+
+
+
+

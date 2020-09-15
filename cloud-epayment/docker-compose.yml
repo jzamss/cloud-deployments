@@ -1,0 +1,23 @@
+version: "3"
+
+services:
+
+  cloud-epayment-server:
+    image: "ramesesinc/cloud-epayment-server:v001"
+    container_name: cloud-epayment-server
+    restart: always
+    logging: 
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "10m"
+    environment:
+      TZ: "Asia/Manila"
+    env_file:
+      - ../env.conf
+      - ../_custom/env.conf
+    ports:
+      - "9072:8070"
+    volumes:
+     - ./modules:/apps/server/services/apps/enterprise/modules
+     - ./lib/rameses-common2.jar:/apps/server/lib/rameses-common2.jar

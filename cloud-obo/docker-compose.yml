@@ -1,0 +1,24 @@
+version: "3"
+
+services:
+
+  cloud-obo-server:
+    image: "ramesesinc/cloud-obo-server:v001"
+    container_name: cloud-obo-server
+    restart: always
+    logging: 
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "10m"
+    environment:
+      TZ: "Asia/Manila"
+    env_file:
+      - ../env.conf
+      - ../_custom/env.conf
+    ports:
+      - "10001:8070"
+    volumes:
+      - ./datasources:/apps/server/services/datasources
+      - /home/rameses/RAMESES/modules/obo/cloud-server:/apps/server/services/apps/enterprise/modules
+      - ./lib/rameses-osiris3-server.jar:/apps/server/lib/rameses-osiris3-server.jar

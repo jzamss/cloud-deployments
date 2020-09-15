@@ -1,0 +1,80 @@
+server {
+    listen       80;
+    server_name  localhost;
+
+    #
+    # This is for the static files
+    # 
+
+    location / {
+        include conf.d/proxy.conf;
+        proxy_pass http://${app_server_ip}:3001;
+    }
+
+    location /filipizen/epayment/sendtopartner {
+        include conf.d/proxy.conf;
+        proxy_pass http://${app_server_ip}:5010/filipizen/epayment/sendtopartner;
+    }
+
+    # partner successurl callback
+    location /payoptions {
+        include conf.d/proxy.conf;
+        proxy_pass http://${app_server_ip}:5010/filipizen/payoptions;
+    }
+
+    # TEST PAY LBP
+    location /epayment/testpay/ {
+        include conf.d/proxy.conf;
+        return 301 http://${app_server_ip}:9080/epayment/sendtopartner$is_args$args;
+    }
+
+#    location /js-proxy/ {
+#        include conf.d/proxy.conf;
+#        proxy_pass http://${app_server_ip}:9080/js-proxy/;
+#    }
+
+#    location /js-invoke/ {
+#        include conf.d/proxy.conf;
+#        proxy_pass http://${app_server_ip}:9080/js-invoke/;
+#    }
+
+    location /socket.io {
+        include conf.d/proxy.conf;
+        proxy_pass http://${app_server_ip}:3000;
+    }
+
+    location /service {
+        include conf.d/proxy.conf;
+        proxy_pass http://${app_server_ip}:3000;
+    }
+    
+    location /cloud-server/services/obo/ {
+        include conf.d/proxy.conf;
+        proxy_pass http://${app_server_ip}:10001/osiris3/services/enterprise/;
+    }
+    
+    location /cloud-server/services/epayment/ {
+        include conf.d/proxy.conf;
+        proxy_pass http://${app_server_ip}:9072/osiris3/services/enterprise/;
+    }
+    
+    location /cloud-server/json/epayment/ {
+        include conf.d/proxy.conf;
+        proxy_pass http://${app_server_ip}:9072/osiris3/json/enterprise/;
+    }
+
+
+    location /cloud-server/services/partner/ {
+        include conf.d/proxy.conf;
+        proxy_pass http://${app_server_ip}:9071/osiris3/services/enterprise/;
+    }
+
+    location /cloud-server/json/partner/ {
+        include conf.d/proxy.conf;
+        proxy_pass http://${app_server_ip}:9071/osiris3/json/enterprise/;
+    }
+
+    location /jreports {
+        proxy_pass http://192.168.1.9:5005;
+    }
+}

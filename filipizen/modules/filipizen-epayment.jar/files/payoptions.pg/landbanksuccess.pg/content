@@ -1,0 +1,24 @@
+<%
+	def svc = SERVICE.lookup("CloudPaymentService", "epayment");
+
+	def m = [:]; 
+	m.putAll( PARAMS );  
+	m.paypartnerid = 'LBP'; 
+	m.paymentrefid = m.MerchantRefNo; 
+
+	def pmt = svc.postPayment( m );
+	pmt.orgcode = pmt.info.orgcode;
+	pmt.particulars = pmt.info.particulars;
+	pmt.paypartnercode = pmt.paypartnerid;
+
+	def args = '?orgcode='+ pmt.orgcode +'&paymentrefid='+ m.paymentrefid; 
+	println 'args -> '+ args; 
+%>
+
+<form id="postform" method="GET" action="http://192.168.1.9/payoptions/landbanksuccess">
+	<input type="hidden" name="orgcode" value="${pmt.orgcode}"/>
+</form>
+
+<script> 
+\$('#postform').submit(); 
+</script>

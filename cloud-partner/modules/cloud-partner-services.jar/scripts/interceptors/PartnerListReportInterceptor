@@ -1,0 +1,17 @@
+import com.rameses.annotations.*; 
+
+class PartnerListReportInterceptor {
+	@DataContext('gdx_partner')
+	def partner_em;
+
+	@After(pattern="FormReportService.getData", eval="#{ args[0].reportid == 'partnerlist' }")
+	public void afterGetData( def evt ) {
+		def t = evt.args[0];
+		def result = evt.result;
+		
+		result.data = partner_em.where('1=1')
+					.select('firstname:{name}, lastname:{group.name}')
+					.list()
+	}
+
+}

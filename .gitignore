@@ -1,0 +1,12 @@
+._.DS_Store
+._.*
+._*
+.DS_Store
+.osiris_pid
+.shutdown_pid
+Thumbs.db
+_custom
+/rabbitmq/data
+/redis-cache
+baks
+bak

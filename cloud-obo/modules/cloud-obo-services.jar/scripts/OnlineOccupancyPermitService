@@ -1,0 +1,135 @@
+import com.rameses.annotations.*;
+import com.rameses.util.*;
+import java.rmi.server.*;
+import obo.facts.*;
+import java.text.*;
+
+public class OnlineOccupancyPermitService  {
+
+	@Service("DateService")
+	def dateSvc;
+
+	@Service(dynamic=true)
+	def dynamicSvc;
+
+	@DataContext("online_occupancy_permit")
+	def appEm;
+
+	@DataContext("online_occupancy_permit_entity")
+	def entityEm;
+
+	@ProxyMethod
+	public def moveNextStep( def o ) {
+		if(!o.appid) throw new Exception("appid is required in determining the next step");
+		def app = appEm.find( [objid: o.appid] ).first();
+		def step = app.step;
+
+		def nextStep = step + 1;
+		//compare next step if less than existing then you can update otherwise stay the same
+		if(app.step < nextStep ) {
+			appEm.find( [objid: o.appid] ).update([step: nextStep]);			
+		}
+		else {
+			nextStep = app.step;
+		}
+		return [step:nextStep];
+	}
+
+	@ProxyMethod
+	public def create(def o) {
+		def kg = new KeyGen();
+		o.objid = "OP"+ kg.generateAlphanumKey(o.orgcode+"-",8);
+		o.dtfiled = dateSvc.getServerDate();
+		o.step = 1;
+
+		def applicant = o.remove("applicant");
+		applicant.remove("objid");
+		def app = appEm.create( o );
+		applicant.appid = app.objid;
+		applicant =  entityEm.create( applicant );
+
+		appEm.find([objid: app.objid]).update([applicantid: applicant.objid ]);
+
+		/*
+		def emailSvc = dynamicSvc.lookup(o.orgcode+":EmailService");
+		app.tokenid = "MYTOKEN " + new UID();
+		emailSvc.send( app );
+		*/
+		return app;
+	}
+
+	@ProxyMethod
+	public def update( def o ) {
+		return appEm.find([objid: o.objid ]).update( o );
+	}
+
+	@ProxyMethod
+	public def findCurrentInfo( def o ) {
+		return appEm.find( [objid: o.appid ] ).select("orgcode,step").first();
+	}
+
+	@ProxyMethod
+	public def getApplication(def o ) {
+		return appEm.find([objid: o.appid ] ).first();
+	}
+
+
+	
+
+
+	//This is called by the local client
+	@ProxyMethod
+	public def getOnlineSubmission(def parm) {
+		def appid = parm.appid;
+		def app = appEm.find([objid: appid ] ).first();
+		//remove the object links so it will not add to the load
+		app.remove( "applicant");
+		app.remove( "location");
+		app.remove( "occupancytype");
+
+		//add the entities, locations, professionals
+		app.entities = entityEm.find( [appid: appid ]).list();
+
+
+		app.ancillaries = ancillaryEm.find([appid: appid]).list();
+		app.ancillaries.each{ it.remove("type"); it.remove("designprofessional"); it.remove("supervisor"); }
+		
+
+		app.infos = appInfoEm.find( [appid: appid ] ).list();
+		app.infos.each { it.remove("type") };
+		app.requirements = reqEm.find( [appid: appid ]).list();
+
+		app.trackingno = app.remove("objid");
+		return app;
+	}
+
+	def formatAddress( def addr ) {
+		def lst = [];
+		lst << [addr.unitno, addr.bldgno, addr.bldgname ].findAll{it!=null}.join(" ");
+		lst << [addr.street, addr.subdivision ].findAll{it!=null}.join(",");
+		lst << [addr.barangay?.name, addr.citymunicipality, addr.province ].findAll{it!=null}.join(",");
+		return lst.findAll{it}.join(",");		
+	}
+
+	def formatPersonalName( def v ) {
+		return v.lastname + ", " + v.firstname + " " + ((v.middlename!=null)?v.middlename.substring(0,1)+'.': '');
+	}
+
+	//reusable method of saving entity
+	def saveEntity(def o) {
+		if(o.resident==null) o.resident = 0;
+		if( !o.entitytype ) o.entitytype = 'INDIVIDUAL';
+		if( o.entitytype == 'INDIVIDUAL' ) o.name = formatPersonalName(o);
+
+		if(!o.objid) {
+			def v = [appid: o.appid];
+			v.putAll(o);
+			v.address.text = formatAddress(o.address);
+			return entityEm.create(v);
+		}
+		else {
+			o.address.text = formatAddress(o.address);
+			return entityEm.find( [objid: o.objid] ).update( o );
+		}
+	}	
+}

@@ -1,0 +1,34 @@
+<%
+   System.out.println('param '+ PARAMS); 
+   def svc = SERVICE.lookup("CloudPaymentService", "epayment");
+   System.out.println('svc is '+ svc); 
+   def po = svc.getPaymentOrder([ refno: PARAMS.refno ]);
+   System.out.println('po -> '+ po); 
+
+   def p = [:];
+   p.paymentorder = po;
+   p.payoption = PARAMS.payoption;
+   def payoption = svc.getPaymentPartnerOption( p ); 
+   def formaction = payoption.paypartner.info?.testactionurl; 
+   if ( !formaction ) formaction = payoption.paypartner.actionurl; 
+%>
+
+<style>
+.preloader{ position: absolute;top:0;bottom: 0;left: 0;right: 0;margin: auto;width: 100%;text-align:center;height: 100px;}
+</style>
+
+<div class="preloader">
+   Redirecting to payment partner ... Please wait<br>
+   <img src="/res/epayment/waitingicon.gif" />
+</div>
+
+<form id="postform" method="POST" action="${formaction}">
+	<% payoption.paypartner.params.each { k,v-> %> 
+      <input type="hidden" name="${k}" value="${v}" />
+   <%}%>
+   <input type="hidden" name="orgcode" value="${po.orgcode}" />
+</form>
+
+<script> 
+\$('#postform').submit(); 
+</script>

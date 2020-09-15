@@ -1,0 +1,83 @@
+version: "3"
+
+services:
+
+  cloud-redis:
+    image: redis:5.0.6
+    container_name: cloud-redis
+    restart: always
+    logging: 
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "10m"
+    volumes:
+      - ../redis-cache:/data
+    expose: 
+      - 6379
+    ports:
+      - "6379:6379"
+
+
+  cloud-gdx-node:
+    image: "ramesesinc/cloud-gdx-node:1.0.1"
+    container_name: cloud-gdx-node
+    restart: always
+    logging: 
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "10m"
+    expose:
+      - 3000
+    ports:
+      - "3000:3000"
+    links:
+      - cloud-redis
+    environment:
+      - REDIS_URL=redis://cloud-redis
+    depends_on:
+      - cloud-redis
+
+
+  cloud-rabbitmq:
+    image: "rabbitmq:3-management"
+    container_name: cloud-rabbitmq
+    restart: always
+    hostname: myhost
+    logging: 
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "10m"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    volumes: 
+      - ../rabbitmq/data:/var/lib/rabbitmq/mnesia/rabbit@myhost
+
+
+  cloud-partner-server:
+    image: "ramesesinc/cloud-partner-server:v001"
+    container_name: cloud-partner-server
+    logging: 
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "10m"
+    links:
+      - cloud-redis
+      - cloud-gdx-node
+    depends_on:
+      - cloud-redis
+      - cloud-rabbitmq
+    environment:
+      TZ: "Asia/Manila"
+    env_file:
+      - ../env.conf
+      - ../_custom/env.conf
+    ports:
+      - "9071:8070"
+    volumes:
+      - ./modules:/apps/server/services/apps/enterprise/modules
+      - ./lib/rameses-osiris3-server.jar:/apps/server/lib/rameses-osiris3-server.jar
